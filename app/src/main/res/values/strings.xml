@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Plinko Balls</string>
+    <string name="splash_ball_content_description">Игровой шарик</string>
+</resources>
