@@ -10,17 +10,17 @@ val BoardGrass = Color(0xFF91C788)
 val BoardGrassDark = Color(0xFF4CAF50)
 val PegToon = Color(0xFF4D4732)
 
-/** 11 слотов: 0, 0, .2, .5, 1, 2, 1, .5, .2, 0, 0 */
+/** 11 slots: .5, .5, 1, 2, 3, 5, 3, 2, 1, .5, .5 */
 val ToonSlotColors = listOf(
-    Color(0xFFBA1A1A),
-    Color(0xFFBA1A1A),
+    BrightOrange,
     BrightOrange,
     Primary,
+    Secondary,
     Secondary,
     PrimaryContainer,
     Secondary,
+    Secondary,
     Primary,
     BrightOrange,
-    Color(0xFFBA1A1A),
-    Color(0xFFBA1A1A),
+    BrightOrange,
 )

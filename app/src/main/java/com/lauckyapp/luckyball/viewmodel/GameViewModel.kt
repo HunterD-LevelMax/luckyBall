@@ -23,6 +23,12 @@ data class GameUiState(
 
 class GameViewModel : ViewModel() {
 
+    companion object {
+        private const val AUTOSPIN_DELAY_MS = 600L
+        val QUICK_BETS = listOf(1, 5, 10, 50, 100)
+        val AUTOSPIN_OPTIONS = listOf(5, 10, 20, -1)
+    }
+
     val engine = PlinkoEngine()
 
     var betAmount by mutableIntStateOf(10)
@@ -34,10 +40,17 @@ class GameViewModel : ViewModel() {
     var lastResult by mutableStateOf<SlotResult?>(null)
         private set
 
+    var isAutoSpinActive by mutableStateOf(false)
+        private set
+
+    var autoSpinRemaining by mutableIntStateOf(0)
+        private set
+
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     private var simulationJob: Job? = null
+    private var autoSpinJob: Job? = null
     private var sharedMainViewModel: SharedMainViewModel? = null
     private var isScreenActive = true
 
@@ -47,32 +60,39 @@ class GameViewModel : ViewModel() {
 
     fun setScreenActive(active: Boolean) {
         isScreenActive = active
-        if (!active) simulationJob?.cancel()
-        else if (isDropping) startSimulationLoop()
+        if (!active) {
+            simulationJob?.cancel()
+            stopAutoSpin()
+        } else if (isDropping) {
+            startSimulationLoop()
+        }
     }
 
     fun syncBetWithBalance(balance: Int) {
         if (betAmount > balance) {
             betAmount = balance.coerceAtLeast(1)
         }
+        if (balance < betAmount && isAutoSpinActive) {
+            stopAutoSpin()
+        }
     }
 
     fun setBet(amount: Int) {
-        if (!isDropping) {
+        if (!isDropping && !isAutoSpinActive) {
             val balance = sharedMainViewModel?.state?.value?.balance ?: 0
             betAmount = amount.coerceIn(1, balance.coerceAtLeast(1))
         }
     }
 
     fun increaseBet() {
-        if (!isDropping) {
+        if (!isDropping && !isAutoSpinActive) {
             val balance = sharedMainViewModel?.state?.value?.balance ?: 0
             betAmount = (betAmount * 2).coerceAtMost(balance.coerceAtLeast(1))
         }
     }
 
     fun decreaseBet() {
-        if (!isDropping) {
+        if (!isDropping && !isAutoSpinActive) {
             betAmount = (betAmount / 2).coerceAtLeast(1)
         }
     }
@@ -80,20 +100,43 @@ class GameViewModel : ViewModel() {
     fun dropBall(normalizedX: Float? = null) {
         val shared = sharedMainViewModel ?: return
         val balance = shared.state.value.balance
-        if (isDropping || balance < betAmount) return
-        if (!shared.trySpend(betAmount)) return
+        if (isDropping || balance < betAmount) {
+            if (isAutoSpinActive) stopAutoSpin()
+            return
+        }
+        if (!shared.trySpend(betAmount)) {
+            stopAutoSpin()
+            return
+        }
 
         isDropping = true
         lastResult = null
         engine.dropBall(betAmount, normalizedX) ?: run {
             isDropping = false
             shared.addMoney(betAmount)
+            stopAutoSpin()
             return
         }
         startSimulationLoop()
     }
 
+    fun startAutoSpin(count: Int) {
+        if (isDropping) return
+        isAutoSpinActive = true
+        autoSpinRemaining = count
+        if (!isDropping) {
+            dropBall()
+        }
+    }
+
+    fun stopAutoSpin() {
+        isAutoSpinActive = false
+        autoSpinRemaining = 0
+        autoSpinJob?.cancel()
+    }
+
     fun resetRound() {
+        stopAutoSpin()
         simulationJob?.cancel()
         engine.clearBalls()
         isDropping = false
@@ -122,12 +165,11 @@ class GameViewModel : ViewModel() {
                 sharedMainViewModel?.addMoney(winAmount)
             }
 
-            val result = SlotResult(
+            lastResult = SlotResult(
                 slot = slotIndex,
                 multiplier = multiplier,
                 winAmount = winAmount,
             )
-            lastResult = result
 
             sharedMainViewModel?.addWinRecord(
                 WinRecord(
@@ -135,6 +177,7 @@ class GameViewModel : ViewModel() {
                     multiplier = (multiplier * 10).toInt(),
                     amount = winAmount,
                     skinId = skinId,
+                    betAmount = ball.betAmount,
                 ),
             )
         }
@@ -142,5 +185,32 @@ class GameViewModel : ViewModel() {
         engine.balls.removeAll(finishedBalls.toSet())
         isDropping = engine.hasActiveBall()
         _uiState.update { it.copy(frameTick = it.frameTick + 1) }
+
+        if (isAutoSpinActive) {
+            scheduleNextAutoSpin()
+        }
+    }
+
+    private fun scheduleNextAutoSpin() {
+        autoSpinJob?.cancel()
+        autoSpinJob = viewModelScope.launch {
+            delay(AUTOSPIN_DELAY_MS)
+            if (!isAutoSpinActive || !isScreenActive) return@launch
+
+            if (autoSpinRemaining > 0) {
+                autoSpinRemaining -= 1
+                if (autoSpinRemaining == 0) {
+                    stopAutoSpin()
+                    return@launch
+                }
+            }
+
+            val balance = sharedMainViewModel?.state?.value?.balance ?: 0
+            if (balance >= betAmount && !isDropping) {
+                dropBall()
+            } else {
+                stopAutoSpin()
+            }
+        }
     }
 }

@@ -19,7 +19,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.lauckyapp.luckyball.R
 import com.lauckyapp.luckyball.ui.components.GameBettingPanel
+import com.lauckyapp.luckyball.ui.components.GameResultSnackbar
 import com.lauckyapp.luckyball.ui.components.LuckyBallBottomNav
 import com.lauckyapp.luckyball.ui.components.LuckyBallTopBar
 import com.lauckyapp.luckyball.ui.screens.GameScreen
@@ -40,10 +42,10 @@ object Routes {
     const val HISTORY = "history"
 }
 
-enum class MainTab(val route: String, val label: String) {
-    GAME(Routes.GAME, "Play"),
-    HISTORY(Routes.HISTORY, "Stats"),
-    STORE(Routes.STORE, "Store"),
+enum class MainTab(val route: String, val labelRes: Int) {
+    GAME(Routes.GAME, R.string.nav_play),
+    HISTORY(Routes.HISTORY, R.string.nav_stats),
+    STORE(Routes.STORE, R.string.nav_store),
 }
 
 @Composable
@@ -90,14 +92,23 @@ fun AppNavGraph(
                 selectedTab = selectedTab,
                 onTabSelected = { tab -> navigateTab(navController, tab) { selectedTab = it } },
                 gameBottomBar = {
-                    GameBettingPanel(
+                    Column {
+                        GameResultSnackbar(result = gameViewModel.lastResult)
+                        GameBettingPanel(
                         betAmount = gameViewModel.betAmount,
                         balance = sharedState.balance,
                         isDropping = gameViewModel.isDropping,
+                        isAutoSpinActive = gameViewModel.isAutoSpinActive,
+                        autoSpinRemaining = gameViewModel.autoSpinRemaining,
                         onIncreaseBet = gameViewModel::increaseBet,
                         onDecreaseBet = gameViewModel::decreaseBet,
+                        onSetBet = gameViewModel::setBet,
                         onDropBall = { gameViewModel.dropBall() },
-                    )
+                        onStartAutoSpin = gameViewModel::startAutoSpin,
+                        onStopAutoSpin = gameViewModel::stopAutoSpin,
+                        onReset = gameViewModel::resetRound,
+                        )
+                    }
                 },
             ) { innerPadding ->
                 GameScreen(

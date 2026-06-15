@@ -17,19 +17,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lauckyapp.luckyball.R
 import com.lauckyapp.luckyball.ui.theme.OnSurface
 import com.lauckyapp.luckyball.ui.theme.Outline
 import com.lauckyapp.luckyball.ui.theme.Primary
 import com.lauckyapp.luckyball.ui.theme.Surface
 
-/**
- * Верхняя панель как в lucky_ball_plinko_game_screen:
- * кошелёк + баланс слева, «LUCKY BALL» справа, кремовый фон, толстая обводка снизу.
- */
 @Composable
 fun LuckyBallTopBar(
     balance: Int,
@@ -49,7 +47,7 @@ fun LuckyBallTopBar(
                 .fillMaxWidth()
                 .background(Surface)
                 .border(width = 4.dp, color = Outline)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
@@ -71,8 +69,8 @@ fun LuckyBallTopBar(
                 )
             }
             Text(
-                text = "LUCKY BALL",
-                style = MaterialTheme.typography.headlineMedium,
+                text = stringResource(R.string.game_title),
+                style = MaterialTheme.typography.titleLarge,
                 color = Primary,
                 fontWeight = FontWeight.ExtraBold,
                 fontStyle = FontStyle.Italic,

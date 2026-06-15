@@ -16,19 +16,40 @@ class PlinkoEngine {
     companion object {
         const val ROWS = 12
         const val COLS_BASE = 3
-        val MULTIPLIERS = listOf(0f, 0f, 0.2f, 0.5f, 1f, 2f, 1f, 0.5f, 0.2f, 0f, 0f)
+        /** Symmetrical payouts — no zero slots, higher center jackpot. */
+        val MULTIPLIERS = listOf(0.5f, 0.5f, 1f, 2f, 3f, 5f, 3f, 2f, 1f, 0.5f, 0.5f)
         const val GRAVITY = 0.0006f
-        const val BALL_RADIUS = 0.018f
+        const val BALL_RADIUS = 0.019f
         const val PEG_RADIUS = 0.012f
         const val BOUNCE_DAMPING = 0.55f
         const val HORIZONTAL_SPREAD = 0.012f
         const val FRAME_DELAY_MS = 16L
         const val BOARD_TOP = 0.05f
-        const val BOARD_BOTTOM = 0.88f
+        /** Win line — ball resolves when entering the slot row. */
+        const val BOARD_BOTTOM = 0.918f
+        /** Gap between last peg row and basket tops. */
+        const val PEG_GAP_ABOVE_SLOTS = 0.022f
+        /** Basket height as fraction of board height. */
+        const val SLOT_HEIGHT_FRAC = 0.08f
+        /** Gap between basket bottom and board edge. */
+        const val SLOT_BOTTOM_INSET = 0.005f
         const val BOARD_LEFT = 0.05f
         const val BOARD_RIGHT = 0.95f
         const val HIGHLIGHT_DURATION_MS = 400L
         const val KNOCK_SOUND_DEBOUNCE_MS = 50L
+
+        val SLOT_TOP_NORM: Float
+            get() = 1f - SLOT_BOTTOM_INSET - SLOT_HEIGHT_FRAC
+
+        val PEG_AREA_BOTTOM: Float
+            get() = SLOT_TOP_NORM - PEG_GAP_ABOVE_SLOTS
+
+        fun formatMultiplier(mult: Float): String = when {
+            mult <= 0f -> "0x"
+            mult < 1f -> ".${(mult * 10).toInt()}x"
+            kotlin.math.abs(mult - mult.toInt()) < 0.05f -> "${mult.toInt()}x"
+            else -> String.format(java.util.Locale.US, "%.1fx", mult)
+        }
     }
 
     val pegs = mutableListOf<PegPosition>()
@@ -47,11 +68,12 @@ class PlinkoEngine {
     fun generatePegs() {
         pegs.clear()
         val boardWidth = BOARD_RIGHT - BOARD_LEFT
-        val boardHeight = BOARD_BOTTOM - BOARD_TOP
+        val pegBottom = PEG_AREA_BOTTOM
+        val boardHeight = pegBottom - BOARD_TOP
 
         for (row in 0 until ROWS) {
             val pegsInRow = COLS_BASE + row
-            val rowY = BOARD_TOP + (row + 1) * boardHeight / (ROWS + 2)
+            val rowY = BOARD_TOP + (row + 1) * boardHeight / ROWS
             val rowWidth = pegsInRow * boardWidth / (ROWS + COLS_BASE)
             val startX = 0.5f - rowWidth / 2f
 

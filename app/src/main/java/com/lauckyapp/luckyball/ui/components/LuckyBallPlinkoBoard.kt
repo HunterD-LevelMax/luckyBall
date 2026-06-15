@@ -7,8 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,6 +22,8 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -41,6 +42,9 @@ import com.lauckyapp.luckyball.ui.theme.PrimaryContainer
 import com.lauckyapp.luckyball.ui.theme.ShapeLg
 import com.lauckyapp.luckyball.ui.theme.ToonSlotColors
 import com.lauckyapp.luckyball.utils.PlinkoEngine
+
+/** Only affects how big the ball looks — physics uses [PlinkoEngine.BALL_RADIUS]. */
+private const val VISUAL_BALL_SCALE = 1.35f
 
 @Composable
 fun LuckyBallPlinkoBoard(
@@ -63,9 +67,8 @@ fun LuckyBallPlinkoBoard(
 
     BoxWithConstraints(
         modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(0.8f)
-            .border(6.dp, Outline, ShapeLg)
+            .fillMaxSize()
+            .border(4.dp, Outline, ShapeLg)
             .background(BoardStone, ShapeLg),
     ) {
         val boardWidthPx = constraints.maxWidth.toFloat()
@@ -73,26 +76,29 @@ fun LuckyBallPlinkoBoard(
 
         Canvas(
             modifier = Modifier
-                .matchParentSize()
+                .fillMaxSize()
                 .pointerInput(canDrop) {
                     if (!canDrop) return@pointerInput
                     detectTapGestures { offset ->
-                        if (offset.y <= boardHeightPx * 0.25f) {
-                            val normalizedX = offset.x / boardWidthPx
-                            onTapDrop(normalizedX)
+                        if (offset.y <= boardHeightPx * 0.22f) {
+                            onTapDrop(offset.x / boardWidthPx)
                         }
                     }
                 },
         ) {
-            val tick = redraw
             val w = size.width
             val h = size.height
+            val slotBottom = h * (1f - PlinkoEngine.SLOT_BOTTOM_INSET)
+            val baseSlotHeight = h * PlinkoEngine.SLOT_HEIGHT_FRAC
+            val slotZoneTop = slotBottom - baseSlotHeight
+            val pegZoneBottom = h * PlinkoEngine.PEG_AREA_BOTTOM
 
             drawRect(
                 brush = Brush.verticalGradient(
                     0f to BoardSkyTop,
-                    0.65f to BoardSkyMid,
-                    0.7f to BoardGrass,
+                    0.55f to BoardSkyMid,
+                    (pegZoneBottom / h - 0.04f).coerceAtLeast(0.4f) to BoardGrass,
+                    slotZoneTop / h to BoardGrassDark,
                     1f to BoardGrassDark,
                     startY = 0f,
                     endY = h,
@@ -101,10 +107,10 @@ fun LuckyBallPlinkoBoard(
             )
 
             var dy = 8f
-            while (dy < h * 0.7f) {
+            while (dy < pegZoneBottom) {
                 var dx = 8f
                 while (dx < w) {
-                    drawCircle(OnSurfaceVariant.copy(alpha = 0.15f), 2f, Offset(dx, dy))
+                    drawCircle(OnSurfaceVariant.copy(alpha = 0.12f), 2f, Offset(dx, dy))
                     dx += 20f
                 }
                 dy += 20f
@@ -113,41 +119,40 @@ fun LuckyBallPlinkoBoard(
             val slotCount = PlinkoEngine.MULTIPLIERS.size
             val slotWidth = w * (PlinkoEngine.BOARD_RIGHT - PlinkoEngine.BOARD_LEFT) / slotCount
             val slotsStartX = w * PlinkoEngine.BOARD_LEFT
-            val slotsY = h * PlinkoEngine.BOARD_BOTTOM
             val centerSlot = 5
 
             for (i in 0 until slotCount) {
                 val slotX = slotsStartX + i * slotWidth
                 val slotColor = ToonSlotColors.getOrElse(i) { Color.Gray }
                 val isCenter = i == centerSlot
-                val slotHeight = if (isCenter) h * 0.12f else h * 0.1f
-                val top = slotsY - slotHeight + if (isCenter) -h * 0.02f else 0f
+                val slotHeight = baseSlotHeight
+                val top = slotBottom - slotHeight
 
                 drawRect(
-                    color = slotColor.copy(alpha = 0.9f),
-                    topLeft = Offset(slotX + 1f, top),
-                    size = Size(slotWidth - 2f, slotHeight),
+                    color = slotColor.copy(alpha = 0.95f),
+                    topLeft = Offset(slotX + 2f, top),
+                    size = Size(slotWidth - 4f, slotHeight),
                 )
                 drawRect(
                     color = Outline,
-                    topLeft = Offset(slotX + 1f, top),
-                    size = Size(slotWidth - 2f, slotHeight),
-                    style = Stroke(3f),
+                    topLeft = Offset(slotX + 2f, top),
+                    size = Size(slotWidth - 4f, slotHeight),
+                    style = Stroke(if (isCenter) 3f else 2.5f),
                 )
                 drawIntoCanvas { canvas ->
                     val paint = Paint().apply {
                         color = Color.White.toArgb()
-                        textSize = slotWidth * (if (isCenter) 0.32f else 0.28f)
+                        textSize = slotWidth * (if (isCenter) 0.38f else 0.36f)
                         textAlign = Paint.Align.CENTER
                         isFakeBoldText = true
                         isAntiAlias = true
                     }
                     val mult = PlinkoEngine.MULTIPLIERS[i]
-                    val text = if (mult < 1f) ".${(mult * 10).toInt()}x" else "${mult.toInt()}x"
+                    val text = PlinkoEngine.formatMultiplier(mult)
                     canvas.nativeCanvas.drawText(
                         text,
                         slotX + slotWidth / 2f,
-                        top + slotHeight * 0.62f,
+                        top + slotHeight * 0.68f,
                         paint,
                     )
                 }
@@ -156,13 +161,13 @@ fun LuckyBallPlinkoBoard(
             pegs.forEachIndexed { pegIndex, peg ->
                 val pegX = peg.x * w
                 val pegY = peg.y * h
-                val pegRadius = PlinkoEngine.PEG_RADIUS * w
+                if (pegY > pegZoneBottom) return@forEachIndexed
 
+                val pegRadius = PlinkoEngine.PEG_RADIUS * w
                 val highlight = pegHighlights.find { it.pegIndex == pegIndex }
                 val highlightIntensity = if (highlight != null) {
                     val elapsed = System.currentTimeMillis() - highlight.timestamp
-                    val progress = elapsed.toFloat() / PlinkoEngine.HIGHLIGHT_DURATION_MS
-                    (1f - progress).coerceIn(0f, 1f)
+                    (1f - elapsed.toFloat() / PlinkoEngine.HIGHLIGHT_DURATION_MS).coerceIn(0f, 1f)
                 } else 0f
 
                 if (highlightIntensity > 0f) {
@@ -181,21 +186,23 @@ fun LuckyBallPlinkoBoard(
                 drawCircle(Color.Transparent, pegRadius, Offset(pegX, pegY), style = Stroke(2f))
             }
 
-            if (tick >= 0) {
+            if (redraw >= 0) {
                 for (ball in balls) {
                     if (!ball.active) continue
                     val ballX = ball.x * w
                     val ballY = ball.y * h
-                    val ballRadius = PlinkoEngine.BALL_RADIUS * w
-                    val topLeft = Offset(ballX - ballRadius, ballY - ballRadius)
-                    val sizePx = ballRadius * 2f
+                    val ballDiameter = (
+                        PlinkoEngine.BALL_RADIUS * w * 2f * VISUAL_BALL_SCALE
+                        ).toInt().coerceAtLeast(22)
+                    val topLeft = Offset(ballX - ballDiameter / 2f, ballY - ballDiameter / 2f)
                     if (ballBitmap != null) {
                         drawImage(
                             image = ballBitmap,
-                            topLeft = topLeft,
+                            dstOffset = IntOffset(topLeft.x.toInt(), topLeft.y.toInt()),
+                            dstSize = IntSize(ballDiameter, ballDiameter),
                         )
                     } else {
-                        drawCircle(PrimaryContainer, ballRadius, Offset(ballX, ballY))
+                        drawCircle(PrimaryContainer, ballDiameter / 2f, Offset(ballX, ballY))
                     }
                 }
             }

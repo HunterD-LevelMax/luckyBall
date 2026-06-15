@@ -1,4 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Plinko Balls</string>
-    <string name="splash_ball_content_description">Игровой шарик</string>
+    <string name="app_name">Lucky Ball</string>
+    <string name="game_title">LUCKY BALL</string>
+    <string name="splash_loading">LOADING</string>
+    <string name="splash_ball_content_description">Game ball</string>
+
+    <!-- Navigation -->
+    <string name="nav_play">Play</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_store">Store</string>
+
+    <!-- Game -->
+    <string name="current_bet">Current Bet</string>
+    <string name="bet_half">½</string>
+    <string name="bet_double">2×</string>
+    <string name="drop_ball">DROP!</string>
+    <string name="dropping">Dropping…</string>
+    <string name="reset_board">Reset</string>
+    <string name="autospin">Auto Spin</string>
+    <string name="autospin_stop">Stop Auto</string>
+    <string name="autospin_count">Auto ×%1$d</string>
+    <string name="autospin_infinite">Auto ∞</string>
+    <string name="quick_bet_format">$%1$d</string>
+    <string name="balance_format">$%1$d</string>
+    <string name="win_message">You win!</string>
+    <string name="try_again_message">Try again!</string>
+    <string name="win_coins_format">+%1$d coins</string>
+    <string name="zero_coins">0 coins</string>
+
+    <!-- Store -->
+    <string name="store_title">Store</string>
+    <string name="store_balance">Balance: %1$d</string>
+    <string name="skin_status_selected">SELECTED</string>
+    <string name="skin_status_owned">OWNED</string>
+    <string name="skin_select">Equip</string>
+    <string name="skin_free">Free</string>
+    <string name="skin_buy_format">Buy %1$d</string>
+    <string name="skin_cheerful">Cheerful</string>
+    <string name="skin_fire">Fire Ball</string>
+    <string name="skin_cool">Cool Ball</string>
+    <string name="skin_pirate">Pirate Ball</string>
+    <string name="skin_cosmo">Cosmo Ball</string>
+    <string name="skin_pinky">Pink Ball</string>
+
+    <!-- History / Stats -->
+    <string name="stats_title">Stats</string>
+    <string name="stats_subtitle">Game History</string>
+    <string name="stats_clear">Clear</string>
+    <string name="stats_empty">No games yet. Drop some balls!</string>
+    <string name="stats_clear_title">Clear history?</string>
+    <string name="stats_clear_message">All records will be permanently deleted.</string>
+    <string name="stats_total_label">TOTAL</string>
+    <string name="stats_total_sub">Games</string>
+    <string name="stats_best_label">BEST</string>
+    <string name="stats_best_sub">Multiplier</string>
+    <string name="stats_won_label">WON</string>
+    <string name="stats_won_sub">Coins</string>
+    <string name="stats_bet_format">$%1$d Bet</string>
+    <string name="stats_profit_positive">+$%1$d</string>
+    <string name="stats_profit_negative">-$%1$d</string>
+    <string name="stats_big_win">Big Win!</string>
+    <string name="stats_hot">HOT!</string>
+    <string name="history_game_title">Lucky Ball</string>
+    <string name="time_just_now">Just now</string>
+    <string name="time_minutes_ago">%1$d min ago</string>
+    <string name="time_hours_ago">%1$d hr ago</string>
+    <string name="time_days_ago">%1$d d ago</string>
+    <string name="yes">Yes</string>
+    <string name="no">Cancel</string>
+    <string name="history_item_format">%1$s · +%2$d coins</string>
 </resources>

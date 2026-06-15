@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lauckyapp.luckyball.ui.navigation.MainTab
@@ -51,7 +52,7 @@ fun LuckyBallBottomNav(
                 .fillMaxWidth()
                 .background(SurfaceContainer)
                 .border(width = 4.dp, color = Outline)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Bottom,
         ) {
@@ -72,6 +73,7 @@ private fun LuckyNavItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val label = stringResource(tab.labelRes)
     val icon = when (tab) {
         MainTab.GAME -> Icons.Filled.SportsEsports
         MainTab.HISTORY -> Icons.Filled.Leaderboard
@@ -98,18 +100,18 @@ private fun LuckyNavItem(
                 .background(if (selected) PrimaryContainer else SurfaceContainer)
                 .then(if (selected) Modifier.border(2.dp, Outline, shape) else Modifier)
                 .clickable(onClick = onClick)
-                .padding(horizontal = 22.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = tab.label,
+                contentDescription = label,
                 tint = if (selected) OnPrimaryContainer else OnSurfaceVariant,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(22.dp),
             )
             Text(
-                text = tab.label,
+                text = label,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = if (selected) OnPrimaryContainer else OnSurfaceVariant,
